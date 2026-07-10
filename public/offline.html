@@ -1,0 +1,97 @@
+﻿<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Failerry - Offline</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
+    <meta name="theme-color" content="#E60023">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+            background-color: #ffffff;
+            color: #111111;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            text-align: center;
+            padding: 20px;
+        }
+        .container {
+            max-width: 400px;
+        }
+        .icon {
+            width: 100px;
+            height: 100px;
+            background-color: #111111;
+            border-radius: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 30px;
+            box-shadow: 0 15px 30px rgba(82, 80, 80, 0.3);
+            color: white;
+            animation: float 3s ease-in-out infinite;
+        }
+        h1 {
+            font-size: 32px;
+            font-weight: 900;
+            margin-bottom: 12px;
+            letter-spacing: -1px;
+        }
+        p {
+            font-size: 16px;
+            color: #666666;
+            margin-bottom: 35px;
+            line-height: 1.6;
+        }
+        .btn {
+            background-color: #ffffff;
+            color: rgb(0, 0, 0);
+            text-decoration: none;
+            padding: 16px 36px;
+            border-radius: 50px;
+            font-weight: 800;
+            font-size: 16px;
+            display: inline-block;
+            transition: all 0.2s;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 8px 20px rgba(230, 0, 35, 0.2);
+        }
+        .btn:active {
+            transform: scale(0.95);
+            box-shadow: 0 4px 10px rgba(230, 0, 35, 0.2);
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        @media (prefers-color-scheme: dark) {
+            body {
+                background-color: #111111;
+                color: #ffffff;
+            }
+            p {
+                color: #a3a3a3;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="icon">
+            <svg width="48" height="48" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M1 1l22 22M16.72 11.06A10.94 10.94 0 0119 12.55M5 9.86a10.94 10.94 0 00-3 2.69M8.56 16.27A10.94 10.94 0 0012 17a10.94 10.94 0 004.83-1.12M12 2a10 10 0 00-7.07 17.07"></path>
+            </svg>
+        </div>
+        <h1>Ups, Terputus!</h1>
+        <p>Sepertinya kamu sedang offline atau koneksi internetmu terputus. Silakan periksa koneksi dan coba lagi ya.</p>
+        <button class="btn" onclick="window.location.reload()">Coba Lagi</button>
+    </div>
+</body>
+</html>

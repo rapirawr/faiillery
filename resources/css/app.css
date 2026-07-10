@@ -1,0 +1,246 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── CSS Variables: Cream & Brown palette ─────────────────────── */
+:root {
+    --cream:      #FFF8ED;
+    --soft-cream: #F5E6CE;
+    --sand:       #E3C79A;
+    --caramel:    #C69C6D;
+    --brown:      #8B5E3C;
+    --espresso:   #5C3A21;
+    --cocoa:      #3B2417;
+
+    --bg:         var(--cream);
+    --surface:    var(--soft-cream);
+    --border:     var(--sand);
+    --text:       var(--cocoa);
+    --text-muted: var(--espresso);
+    --accent:     var(--brown);
+}
+
+[x-cloak] { display: none !important; }
+
+/* ── Base ──────────────────────────────────────────────────────── */
+@layer base {
+    html { scroll-behavior: smooth; }
+
+    body {
+        background-color: var(--cream);
+        color: var(--cocoa);
+        font-family: 'Outfit', sans-serif;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* Glass navbar — iOS frosted glass */
+    .glass-nav {
+        background: rgba(255, 248, 237, 0.60);
+        backdrop-filter: saturate(200%) blur(40px);
+        -webkit-backdrop-filter: saturate(200%) blur(40px);
+        border-bottom: 1px solid rgba(227, 199, 154, 0.5);
+        box-shadow:
+            0 1px 0 rgba(255, 255, 255, 0.5) inset,
+            0 4px 24px rgba(91, 58, 33, 0.08);
+    }
+
+    /* Nav links */
+    .nav-link {
+        position: relative;
+        padding: 8px 12px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: var(--espresso);
+        transition: color 0.2s ease;
+    }
+    .nav-link:hover { color: var(--cocoa); }
+    .nav-link::after {
+        content: '';
+        position: absolute;
+        bottom: 0; left: 0;
+        width: 0; height: 2px;
+        background: var(--brown);
+        transition: width 0.25s ease;
+    }
+    .nav-link:hover::after { width: 100%; }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 7px; height: 7px; }
+    ::-webkit-scrollbar-track { background: var(--cream); }
+    ::-webkit-scrollbar-thumb { background: var(--sand); border-radius: 6px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--caramel); }
+}
+
+/* ── Component layer ───────────────────────────────────────────── */
+@layer components {
+
+    /* Primary button — warm brown */
+    .btn-primary {
+        background: var(--brown);
+        color: var(--cream);
+        font-weight: 600;
+        border-radius: 10px;
+        padding: 9px 20px;
+        border: none;
+        cursor: pointer;
+        transition: background 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease;
+        box-shadow: 0 2px 8px rgba(139,94,60,0.25);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        text-decoration: none;
+        font-size: 0.875rem;
+    }
+    .btn-primary:hover {
+        background: var(--espresso);
+        box-shadow: 0 4px 14px rgba(139,94,60,0.3);
+    }
+    .btn-primary:active { transform: scale(0.97); }
+
+    /* Secondary button */
+    .btn-secondary {
+        background: transparent;
+        border: 1px solid var(--sand);
+        color: var(--espresso);
+        font-weight: 500;
+        border-radius: 10px;
+        padding: 9px 20px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        text-decoration: none;
+        font-size: 0.875rem;
+    }
+    .btn-secondary:hover {
+        background: var(--soft-cream);
+        border-color: var(--caramel);
+        color: var(--cocoa);
+    }
+    .btn-secondary:active { transform: scale(0.97); }
+
+    /* Icon button */
+    .icon-btn {
+        padding: 8px;
+        border-radius: 10px;
+        color: var(--caramel);
+        background: transparent;
+        border: 1px solid transparent;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .icon-btn:hover {
+        background: var(--soft-cream);
+        color: var(--espresso);
+        border-color: var(--sand);
+    }
+
+    /* Card base */
+    .card {
+        background: var(--soft-cream);
+        border: 1px solid var(--sand);
+        border-radius: 14px;
+        box-shadow: 0 1px 6px rgba(91,58,33,0.06);
+    }
+}
+
+/* ── Utilities ─────────────────────────────────────────────────── */
+
+/* Hide scrollbar */
+.hide-scrollbar::-webkit-scrollbar { display: none; }
+.hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Inertia scroll */
+.inertia-scroll {
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+}
+
+/* ── View Transitions ───────────────────────────────────────────── */
+@media (prefers-reduced-motion: no-preference) {
+    @view-transition { navigation: auto; }
+}
+::view-transition-old(root),
+::view-transition-new(root) { animation-duration: 0.3s; }
+
+/* ── Animations ─────────────────────────────────────────────────── */
+@keyframes modal-up {
+    from { opacity: 0; transform: translateY(20px) scale(0.98); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.animate-modal-up { animation: modal-up 0.35s cubic-bezier(0.16,1,0.3,1); }
+
+@keyframes fade-in-down {
+    from { opacity: 0; transform: translateY(-8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in-down { animation: fade-in-down 0.3s ease both; }
+
+@keyframes fade-in {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+.animate-fade-in { animation: fade-in 0.25s ease both; }
+
+/* ── Pagination: warm-brown active ─────────────────────────────── */
+nav[role="navigation"] span[aria-current="page"] span,
+nav[role="navigation"] button[aria-current="page"] {
+    background: var(--brown) !important;
+    border-color: var(--brown) !important;
+    color: var(--cream) !important;
+}
+nav[role="navigation"] a,
+nav[role="navigation"] button {
+    border-color: var(--sand) !important;
+    color: var(--espresso) !important;
+}
+nav[role="navigation"] a:hover,
+nav[role="navigation"] button:hover {
+    background: var(--soft-cream) !important;
+    color: var(--cocoa) !important;
+}
+
+/* ── Compact mode ───────────────────────────────────────────────── */
+.compact-mode .max-w-7xl,
+.compact-mode .max-w-5xl { max-width: 1400px !important; padding-left: 2rem; padding-right: 2rem; }
+.compact-mode .py-8,
+.compact-mode .py-12 { padding-top: 1.5rem; padding-bottom: 1.5rem; }
+.compact-mode .mb-8,
+.compact-mode .mb-12 { margin-bottom: 1.5rem; }
+.compact-mode .gap-8,
+.compact-mode .gap-12 { gap: 1.5rem; }
+
+/* ── Form inputs: global warm styling ──────────────────────────── */
+input[type="text"]:not([class*="bg-"]),
+input[type="email"]:not([class*="bg-"]),
+input[type="password"]:not([class*="bg-"]),
+textarea:not([class*="bg-"]),
+select:not([class*="bg-"]) {
+    background-color: #fff8f0;
+    border: 1px solid var(--sand);
+    border-radius: 10px;
+    color: var(--cocoa);
+    padding: 10px 14px;
+    font-size: 0.875rem;
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    width: 100%;
+}
+input[type="text"]:not([class*="bg-"]):focus,
+input[type="email"]:not([class*="bg-"]):focus,
+input[type="password"]:not([class*="bg-"]):focus,
+textarea:not([class*="bg-"]):focus,
+select:not([class*="bg-"]):focus {
+    border-color: var(--brown);
+    box-shadow: 0 0 0 3px rgba(139,94,60,0.12);
+}
