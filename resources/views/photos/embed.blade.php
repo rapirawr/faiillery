@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
  <meta charset="UTF-8">
@@ -87,7 +87,11 @@
 </head>
 <body>
  <div class="embed-container">
- <img src="{{ $photo->image_url }}" alt="{{ $photo->title }}" class="main-img">
+  @if($photo->isVideo())
+  <video src="{{ $photo->image_url }}" class="main-img" autoplay muted loop playsinline controls></video>
+  @else
+  <img src="{{ $photo->image_url }}" alt="{{ $photo->title }}" class="main-img">
+  @endif
  
  <div class="overlay">
  <div class="info">

@@ -23,12 +23,21 @@ class PhotoService
         ?string $tags = '',
         ?int $boardId = null,
     ): Photo {
-        // Get image dimensions
-        $imageInfo = getimagesize($file->getPathname());
-        $width = $imageInfo[0] ?? 800;
-        $height = $imageInfo[1] ?? 600;
+        $mimeType = $file->getMimeType();
+        $isImage = str_starts_with($mimeType, 'image/');
 
-        // Store original image on the configured S3 disk with public visibility
+        $width = 800;
+        $height = 600;
+
+        if ($isImage) {
+            $imageInfo = @getimagesize($file->getPathname());
+            if ($imageInfo) {
+                $width = $imageInfo[0] ?? 800;
+                $height = $imageInfo[1] ?? 600;
+            }
+        }
+
+        // Store original file on the configured S3 disk with public visibility
         $disk = Storage::disk('s3');
         $imagePath = $disk->putFile('photos/originals', $file, 'public');
 
@@ -82,12 +91,21 @@ class PhotoService
      */
     protected function generateThumbnail(UploadedFile $file, string $originalPath): string
     {
+        $mimeType = $file->getMimeType();
+        if (!str_starts_with($mimeType, 'image/')) {
+            return $originalPath;
+        }
+
+        $imageInfo = @getimagesize($file->getPathname());
+        if (!$imageInfo) {
+            return $originalPath;
+        }
+
         $maxWidth = 400;
         $extension = $file->getClientOriginalExtension();
         $thumbnailName = 'photos/thumbnails/' . pathinfo($originalPath, PATHINFO_FILENAME) . '_thumb.' . $extension;
 
         // Get original dimensions
-        $imageInfo = getimagesize($file->getPathname());
         $origWidth = $imageInfo[0];
         $origHeight = $imageInfo[1];
 

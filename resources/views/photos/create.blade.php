@@ -1,4 +1,4 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 
 @section('title', 'Upload'. ' - Failerry')
 @section('content')
@@ -6,7 +6,7 @@
  <div class="bg-soft-cream rounded-2xl shadow-minimal border border-sand overflow-hidden transition-colors">
  
  <div class="p-6 border-b border-sand flex items-center justify-between">
- <h1 class="text-2xl md:text-3xl font-display font-bold text-cocoa">Unggah Foto</h1>
+ <h1 class="text-2xl md:text-3xl font-display font-bold text-cocoa">Unggah Media</h1>
  <button onclick="history.back()" class="w-10 h-10 bg-cream hover:bg-soft-cream rounded-lg flex items-center justify-center transition-colors text-cocoa">
  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
  </button>
@@ -15,7 +15,7 @@
  <form action="{{ route('photos.store') }}" method="POST" enctype="multipart/form-data" class="p-6 md:p-10 flex flex-col md:flex-row gap-10" x-data="uploadForm()">
  @csrf
  
- <!-- Left: Image Upload Area -->
+ <!-- Left: Media Upload Area -->
  <div class="w-full md:w-1/2 shrink-0">
  <div class="space-y-4">
  <label for="imageUpload" 
@@ -26,26 +26,38 @@
  @dragleave.prevent="dragover = false"
  @drop.prevent="handleDrop($event)">
  
- <!-- Single Image Preview -->
+ <!-- Single Media Preview -->
  <div x-show="previews.length === 1" class="absolute inset-0 w-full h-full bg-black/5" style="display: none;">
+ <template x-if="previews.length === 1 && !previews[0].isVideo">
  <img :src="previews[0].url" class="w-full h-full object-cover">
- <div class="absolute inset-0 bg-cocoa/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-4">
+ </template>
+ <template x-if="previews.length === 1 && previews[0].isVideo">
+ <video :src="previews[0].url" class="w-full h-full object-cover" autoplay muted loop playsinline></video>
+ </template>
+ <div class="absolute inset-0 bg-cocoa/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-4 z-10">
  <button type="button" @click.stop.prevent="removeImage(0)" class="px-4 py-2 bg-red-600 text-white text-xs font-bold rounded-full hover:bg-red-700 transition-colors shadow-lg">
- Ganti Gambar
+ Ganti Media
  </button>
  </div>
  </div>
 
- <!-- Multi Image Grid Preview (Simple Summary) -->
+ <!-- Multi Media Grid Preview (Simple Summary) -->
  <div x-show="previews.length > 1" class="absolute inset-0 flex flex-col items-center justify-center bg-soft-cream/50" style="display: none;">
  <div class="flex -space-x-4 mb-4">
  <template x-for="(p, i) in previews.slice(0, 3)">
  <div class="w-16 h-16 rounded-lg border-2 border-white overflow-hidden shadow-lg transform" :style="`z-index: ${10-i};`" :class="i === 1 ? 'rotate-3' : (i === 2 ? '-rotate-6' : '-rotate-3')">
+ <template x-if="!p.isVideo">
  <img :src="p.url" class="w-full h-full object-cover">
+ </template>
+ <template x-if="p.isVideo">
+ <div class="w-full h-full bg-cocoa flex items-center justify-center text-white">
+ <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>
  </div>
  </template>
  </div>
- <p class="text-sm font-bold text-cocoa" x-text="`${previews.length} foto dipilih`"></p>
+ </template>
+ </div>
+ <p class="text-sm font-bold text-cocoa" x-text="`${previews.length} file dipilih`"></p>
  <button type="button" @click.stop.prevent="triggerFileInput" class="mt-4 text-xs font-semibold text-caramel hover:text-cocoa transition-colors">
  Tambah atau Ganti
  </button>
@@ -57,10 +69,10 @@
  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
  </div>
  <h3 class="text-lg font-semibold text-cocoa mb-2">Pilih file atau seret ke sini</h3>
- <p class="text-sm text-caramel mb-4 max-w-[250px]">Dukung banyak foto sekaligus</p>
+ <p class="text-sm text-caramel mb-4 max-w-[250px]">Dukung banyak foto atau video sekaligus</p>
  </div>
  
- <input type="file" id="imageUpload" name="image[]" class="hidden" accept="image/jpeg,image/png,image/webp,image/gif" multiple @change="handleFileSelect($event)">
+ <input type="file" id="imageUpload" name="image[]" class="hidden" accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm,video/quicktime" multiple @change="handleFileSelect($event)">
  </label>
 
  <!-- File Size Indicator -->
@@ -85,8 +97,18 @@
  <div x-show="previews.length > 1" class="grid grid-cols-4 gap-2" style="display: none;">
  <template x-for="(p, i) in previews">
  <div class="relative aspect-square group rounded-lg overflow-hidden border border-sand">
+ <template x-if="!p.isVideo">
  <img :src="p.url" class="w-full h-full object-cover">
- <button type="button" @click="removeImage(i)" class="absolute top-1 right-1 w-6 h-6 bg-red-600 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+ </template>
+ <template x-if="p.isVideo">
+ <div class="w-full h-full bg-cocoa flex items-center justify-center text-white relative">
+ <video :src="p.url" class="w-full h-full object-cover" autoplay muted loop playsinline></video>
+ <div class="absolute inset-0 bg-black/30 flex items-center justify-center pointer-events-none">
+ <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>
+ </div>
+ </div>
+ </template>
+ <button type="button" @click="removeImage(i)" class="absolute top-1 right-1 w-6 h-6 bg-red-600 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10">
  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
  </button>
  </div>
@@ -163,7 +185,7 @@
 function uploadForm() {
  return {
  dragover: false,
- previews: [], // Array of {file, url}
+ previews: [], // Array of {file, url, isVideo}
  totalSize: 0,
  limit: {{ \App\Models\Setting::get('max_upload_size_mb', 10) }} * 1024 * 1024,
  isAdmin: {{ auth()->check() && auth()->user()->is_admin ? 'true' : 'false' }},
@@ -189,12 +211,14 @@ function uploadForm() {
 
  addFiles(files) {
  Array.from(files).forEach(file => {
- if (file && file.type.startsWith('image/')) {
+ if (file && (file.type.startsWith('image/') || file.type.startsWith('video/'))) {
+ const isVid = file.type.startsWith('video/');
  const reader = new FileReader();
  reader.onload = (e) => {
  this.previews.push({
  file: file,
- url: e.target.result
+ url: e.target.result,
+ isVideo: isVid
  });
  this.calculateTotalSize();
  this.syncInput();

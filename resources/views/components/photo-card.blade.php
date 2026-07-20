@@ -1,19 +1,35 @@
-﻿@props(['photo'])
+@props(['photo'])
 
 <div class="relative group mb-4 break-inside-avoid rounded-2xl overflow-hidden"
  style="padding-bottom: {{ ($photo->height / $photo->width) * 100 }}%; background:{{ $photo->dominant_color ?? '#F5E6CE' }};">
 
- <!-- Image -->
+ <!-- Media (Image or Video) -->
  <a href="{{ route('photos.show', $photo->uid) }}"
  class="absolute inset-0 w-full h-full"
- x-data="{ loaded: false, checkLoad() { if (this.$refs.img.complete) this.loaded = true; } }"
+ x-data="{ loaded: false, checkLoad() { if ({{ $photo->isVideo() ? 'false' : 'this.$refs.img.complete' }}) this.loaded = true; } }"
  x-init="checkLoad()">
+ @if($photo->isVideo())
+ <video x-ref="video"
+        src="{{ $photo->image_url }}"
+        class="w-full h-full object-cover transition-all duration-500 group-hover:scale-[1.03] opacity-0"
+        :class="{ 'opacity-100': loaded }"
+        autoplay
+        muted
+        loop
+        playsinline
+        x-on:loadeddata="loaded = true">
+ </video>
+ <div class="absolute top-3 left-3 w-7 h-7 rounded-full bg-black/45 text-white flex items-center justify-center z-10 backdrop-blur-md">
+     <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>
+ </div>
+ @else
  <img x-ref="img"
  src="{{ $photo->thumbnail_url }}"
  alt="{{ $photo->title }}"
  class="w-full h-full object-cover transition-all duration-500 group-hover:scale-[1.03] opacity-0"
  :class="{ 'opacity-100': loaded }"
  x-on:load="loaded = true" />
+ @endif
  </a>
 
  <!-- Hover overlay -->

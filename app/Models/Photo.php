@@ -207,4 +207,19 @@ class Photo extends Model
     {
         return $this->belongsToMany(Collection::class)->withTimestamps();
     }
+
+    /**
+     * Check if the media is a video based on file extension.
+     */
+    public function isVideo(): bool
+    {
+        if (empty($this->image_path)) {
+            return false;
+        }
+
+        $extension = strtolower(pathinfo($this->image_path, PATHINFO_EXTENSION));
+
+        return in_array($extension, ['mp4', 'webm', 'ogg', 'mov', 'm4v', 'avi', '3gp']);
+    }
 }
+

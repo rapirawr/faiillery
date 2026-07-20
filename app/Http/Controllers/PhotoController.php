@@ -73,8 +73,8 @@ class PhotoController extends Controller
         // Determine where to redirect
         $redirectPhoto = count($uploadedPhotos) === 1 ? $uploadedPhotos[0] : null;
         $message = count($uploadedPhotos) > 1
-            ? count($uploadedPhotos) . ' foto berhasil diupload!'
-            : 'Foto berhasil diupload!';
+            ? count($uploadedPhotos) . ' file berhasil diunggah!'
+            : 'File berhasil diunggah!';
 
         \Illuminate\Support\Facades\Log::info('Upload process finished', ['total_uploaded' => count($uploadedPhotos)]);
 
@@ -160,7 +160,7 @@ class PhotoController extends Controller
 
         return redirect()
             ->route('photos.show', $photo)
-            ->with('success', 'Foto berhasil diperbarui!');
+            ->with('success', 'Postingan berhasil diperbarui!');
     }
 
     /**
@@ -174,7 +174,7 @@ class PhotoController extends Controller
 
         return redirect()
             ->route('home')
-            ->with('success', 'Foto berhasil dihapus!');
+            ->with('success', 'Postingan berhasil dihapus!');
     }
 
     /**
@@ -212,8 +212,12 @@ class PhotoController extends Controller
             'webp' => 'image/webp',
             'gif'  => 'image/gif',
             'avif' => 'image/avif',
+            'mp4'  => 'video/mp4',
+            'mov'  => 'video/quicktime',
+            'webm' => 'video/webm',
+            'ogg'  => 'video/ogg',
         ];
-        $mimeType = $mimeMap[$extension] ?? 'image/jpeg';
+        $mimeType = $mimeMap[$extension] ?? 'application/octet-stream';
 
         try {
             $disk = \Illuminate\Support\Facades\Storage::disk('s3');
@@ -227,7 +231,7 @@ class PhotoController extends Controller
             $chunk    = fread($stream, 512);
             rewind($stream);
             $detected = (new \finfo(FILEINFO_MIME_TYPE))->buffer($chunk);
-            if ($detected && str_starts_with($detected, 'image/')) {
+            if ($detected && (str_starts_with($detected, 'image/') || str_starts_with($detected, 'video/'))) {
                 $mimeType = $detected;
             }
 

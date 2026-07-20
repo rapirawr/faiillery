@@ -28,7 +28,7 @@ class CmsController extends Controller
 
         // Upload Rules
         'max_upload_size_mb'    => '10',
-        'allowed_file_types'    => 'jpg,jpeg,png,webp,gif',
+        'allowed_file_types'    => 'jpg,jpeg,png,webp,gif,mp4,mov,webm',
         'max_photos_per_user'   => '500',
         'watermark_enabled'     => '0',
         'watermark_text'        => 'Failerry',
