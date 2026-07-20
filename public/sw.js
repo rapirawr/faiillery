@@ -1,10 +1,10 @@
-﻿const CACHE_NAME = 'failerry-v1';
+const CACHE_NAME = 'failerry-v1';
 const OFFLINE_URL = '/offline.html';
 const urlsToCache = [
     '/',
     '/manifest.json',
     '/favicon.ico',
-    '/favicon.svg',
+    '/favicon.jpg',
     OFFLINE_URL
 ];
     

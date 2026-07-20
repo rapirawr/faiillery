@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
     <meta charset="utf-8">
@@ -16,7 +16,7 @@
 
     <title>@yield('title', config('app.name', 'Faiillery'))</title>
     <meta name="description" content="@yield('meta_description', 'Faiillery Photobooth - Capture, style, and share your favorite moments with our aesthetic digital photobooth gallery.')">
-    <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
+    <link rel="icon" type="image/jpeg" href="{{ asset('favicon.jpg') }}">
     
     <!-- PWA Setup -->
     <link rel="manifest" href="{{ asset('manifest.json') }}">
