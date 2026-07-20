@@ -1,7 +1,26 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 
 @section('content')
-<div class="w-full max-w-7xl mx-auto pt-8 px-4 mb-16">
+@php
+    $boardPhotos = $photos->map(function($p) {
+        return [
+            'uid' => $p->uid,
+            'title' => addslashes($p->title),
+            'description' => addslashes($p->description),
+            'image_url' => $p->image_url,
+            'uploader_name' => addslashes($p->user->name ?? 'Anonymous'),
+            'uploader_username' => $p->user->username ?? 'anonymous',
+            'uploader_avatar' => $p->user->avatar_url ?? 'https://i.pravatar.cc/150',
+            'likes_count' => $p->likes_count,
+            'comments_count' => $p->comments()->count(),
+            'is_liked' => auth()->check() && auth()->user()->hasLiked($p),
+            'detail_url' => route('photos.show', $p->uid),
+            'is_video' => $p->isVideo(),
+        ];
+    })->values()->toJson();
+@endphp
+
+<div class="w-full max-w-7xl mx-auto pt-8 px-4 mb-16" x-data="{ boardPhotos: {!! $boardPhotos !!} }">
  
  <!-- Board Header -->
  <div class="flex flex-col items-center mb-10">
@@ -22,6 +41,19 @@
  <span class="font-semibold text-sm">{{ $board->user->name }}</span>
  </a>
  </div>
+
+ <!-- Putar Slideshow Button -->
+ @if($photos->count() > 0)
+ <div class="flex justify-center mb-6">
+     <button @click="$dispatch('open-theater', { photos: boardPhotos, startIndex: 0 })"
+             class="flex items-center gap-2 px-5 py-2.5 bg-[#8B5E3C] hover:bg-[#5C3A21] text-[#FFF8ED] rounded-full text-sm font-bold shadow-md transition-all active:scale-95 border border-[#C69C6D]/30">
+         <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24">
+             <path d="M8 5v14l11-7z"/>
+         </svg>
+         <span>Putar Slideshow</span>
+     </button>
+ </div>
+ @endif
 
  @if($board->description)
  <p class="text-cocoa max-w-lg text-center mb-6">{{ $board->description }}</p>

@@ -1,130 +1,186 @@
 @props(['photo'])
 
-<div class="relative group mb-4 break-inside-avoid rounded-2xl overflow-hidden"
- style="padding-bottom: {{ ($photo->height / $photo->width) * 100 }}%; background:{{ $photo->dominant_color ?? '#F5E6CE' }};">
+@php
+    $aspectRatio = (isset($photo->height, $photo->width) && $photo->width > 0) 
+        ? ($photo->height / $photo->width) * 100 
+        : 125;
+    $dominantColor = $photo->dominant_color ?? '#F5E6CE';
+@endphp
 
- <!-- Media (Image or Video) -->
- <a href="{{ route('photos.show', $photo->uid) }}"
- class="absolute inset-0 w-full h-full"
- x-data="{ loaded: false, checkLoad() { if ({{ $photo->isVideo() ? 'false' : 'this.$refs.img.complete' }}) this.loaded = true; } }"
- x-init="checkLoad()">
- @if($photo->isVideo())
- <video x-ref="video"
-        src="{{ $photo->image_url }}"
-        class="w-full h-full object-cover transition-all duration-500 group-hover:scale-[1.03] opacity-0"
-        :class="{ 'opacity-100': loaded }"
-        autoplay
-        muted
-        loop
-        playsinline
-        x-on:loadeddata="loaded = true">
- </video>
- <div class="absolute top-3 left-3 w-7 h-7 rounded-full bg-black/45 text-white flex items-center justify-center z-10 backdrop-blur-md">
-     <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>
- </div>
- @else
- <img x-ref="img"
- src="{{ $photo->thumbnail_url }}"
- alt="{{ $photo->title }}"
- class="w-full h-full object-cover transition-all duration-500 group-hover:scale-[1.03] opacity-0"
- :class="{ 'opacity-100': loaded }"
- x-on:load="loaded = true" />
- @endif
- </a>
+<div x-data="{ 
+        hovered: false, 
+        liked: {{ ($photo->is_liked ?? false) ? 'true' : 'false' }}, 
+        likesCount: {{ $photo->likes_count ?? 0 }},
+        saved: false,
+        openOptions: false,
+        showBoards: false,
+        saving: false,
+        toggleLike() {
+            this.liked = !this.liked;
+            this.likesCount += this.liked ? 1 : -1;
+            axios.post('{{ route('photos.like', $photo) }}').catch(() => {});
+        }
+     }" 
+     @mouseenter="hovered = true" 
+     @mouseleave="hovered = false; openOptions = false; showBoards = false;"
+     class="relative group mb-4 break-inside-avoid rounded-[20px] overflow-hidden shadow-lg shadow-black/10 border border-white/20 transition-all duration-300 hover:shadow-2xl hover:shadow-black/20 transform hover:-translate-y-1"
+     style="padding-bottom: {{ $aspectRatio }}%; background: {{ $dominantColor }};">
 
- <!-- Hover overlay -->
- <div class="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-250 pointer-events-none flex flex-col justify-between p-3"
- style="background:rgba(59,36,23,0.45);">
+    <!-- Media (Image or Video) -->
+    <a href="{{ route('photos.show', $photo->uid ?? $photo->id) }}"
+       class="absolute inset-0 w-full h-full block overflow-hidden"
+       x-data="{ loaded: false, checkLoad() { if ({{ $photo->isVideo() ? 'false' : 'this.$refs.img.complete' }}) this.loaded = true; } }"
+       x-init="checkLoad()">
+        @if($photo->isVideo())
+            <video x-ref="video"
+                   src="{{ $photo->image_url }}"
+                   class="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105 opacity-0"
+                   :class="{ 'opacity-100': loaded }"
+                   autoplay
+                   muted
+                   loop
+                   playsinline
+                   x-on:loadeddata="loaded = true">
+            </video>
+        @else
+            <img x-ref="img"
+                 src="{{ $photo->thumbnail_url }}"
+                 alt="{{ $photo->title }}"
+                 class="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105 opacity-0"
+                 :class="{ 'opacity-100': loaded }"
+                 x-on:load="loaded = true" />
+        @endif
+    </a>
 
- <!-- Top: Save button -->
- <div class="flex justify-end w-max self-end pointer-events-auto">
- @auth
- <div x-data="{ pinned: {{ ($photo->is_pinned ?? false) ? 'true' : 'false' }}, saving: false, showBoards: false }" class="relative">
- <button @click="showBoards = !showBoards"
- class="font-bold px-5 py-2 rounded-full text-xs transition-all active:scale-95"
- style="background:rgba(255,248,237,0.2);color:#FFF8ED;border:1px solid rgba(255,248,237,0.35);backdrop-filter:blur(6px);">
- Simpan
- </button>
- <div x-show="showBoards" @click.away="showBoards = false"
- class="absolute top-full right-0 mt-2 w-48 rounded-2xl shadow-warm overflow-hidden z-20"
- style="background:#FFF8ED;border:1px solid #E3C79A;display:none;">
- <div class="max-h-48 overflow-y-auto">
- <template x-for="board in window.failerryBoards || []" :key="board.id">
- <button @click="
- saving = true;
- axios.post('{{ route('pins.store') }}', { photo_id: {{ $photo->id }}, board_id: board.id })
- .then(res => { window.showToast(res.data.message); showBoards = false; pinned = true; })
- .catch(err => {
- if (err.response?.status === 409) {
- // Already pinned — unpin instead
- axios.delete('{{ route('pins.destroy') }}', { data: { photo_id: {{ $photo->id }}, board_id: board.id } })
- .then(res => { window.showToast('Foto dihapus dari board.'); showBoards = false; pinned = false; })
- .catch(() => window.showToast('Gagal menghapus simpanan', 'error'));
- } else {
- window.showToast(err.response?.data?.message || 'Gagal menyimpan', 'error');
- }
- })
- .finally(() => saving = false);"
- class="w-full text-left px-4 py-3 text-sm font-semibold transition-colors"
- style="color:#5C3A21;"
- onmouseover="this.style.background='#F5E6CE'" onmouseout="this.style.background=''">
- <span x-text="board.title" class="truncate block"></span>
- </button>
- </template>
- <div x-show="(window.failerryBoards || []).length === 0" class="px-4 py-3 text-sm text-center" style="color:#C69C6D;">
- Belum ada board.
- </div>
- </div>
- </div>
- </div>
- @endauth
- @guest
- <a href="{{ route('login') }}"
- class="font-bold px-5 py-2 rounded-full text-xs transition-all active:scale-95 pointer-events-auto"
- style="background:rgba(255,248,237,0.2);color:#FFF8ED;border:1px solid rgba(255,248,237,0.35);backdrop-filter:blur(6px);">
- Simpan
- </a>
- @endguest
- </div>
+    <!-- Top Corner Floating Glass Action Pills -->
+    <div class="absolute top-3 right-3 flex items-center gap-2 pointer-events-auto z-10">
+        <!-- Quick Like Pill -->
+        <button @click.prevent="toggleLike()" 
+                class="h-8 px-3 rounded-full bg-white/15 hover:bg-white/25 backdrop-blur-xl backdrop-saturate-150 border border-white/30 text-white flex items-center gap-1.5 text-xs font-bold transition-all duration-200 active:scale-90 shadow-md">
+            <svg class="w-3.5 h-3.5 transition-colors duration-200" 
+                 :class="liked ? 'text-red-400 fill-current' : 'text-white fill-none'" 
+                 stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+            </svg>
+            <span x-text="likesCount"></span>
+        </button>
 
- <!-- Bottom: Title + owner + options -->
- <div class="flex items-end justify-between pointer-events-auto">
- <div class="flex flex-col gap-1 max-w-[70%]">
- <a href="{{ route('photos.show', $photo) }}" class="font-bold truncate text-sm hover:underline drop-shadow" style="color:#FFF8ED;">
- {{ $photo->title }}
- </a>
- <a href="{{ route('profile.show', $photo->user) }}" class="flex items-center gap-1.5 hover:opacity-80 transition-opacity">
- <span class="text-[10px] font-bold truncate" style="color:rgba(255,248,237,0.8);">@ {{ $photo->user->username }}</span>
- @if($photo->user->is_verified)
- <x-verified-badge size="w-3.5 h-3.5" checkSize="w-2 h-2" />
- @endif
- </a>
- </div>
+        <!-- Save Button -->
+        @auth
+            <div class="relative">
+                <button @click.prevent="showBoards = !showBoards"
+                        class="h-8 px-3.5 rounded-full text-xs font-bold transition-all active:scale-95 shadow-md flex items-center gap-1"
+                        :class="saved 
+                            ? 'bg-[#8B5E3C] border border-[#C69C6D] text-[#FFF8ED]' 
+                            : 'bg-white/15 hover:bg-white/25 backdrop-blur-xl backdrop-saturate-150 border border-white/30 text-white'">
+                    <span>Simpan</span>
+                </button>
+                <!-- Board Selector Dropdown (Frosted Glass) -->
+                <div x-show="showBoards" 
+                     @click.away="showBoards = false"
+                     x-transition:enter="transition ease-out duration-200"
+                     x-transition:enter-start="opacity-0 scale-95 -translate-y-2"
+                     x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+                     class="absolute top-full right-0 mt-2 w-48 rounded-[20px] bg-white/20 backdrop-blur-xl backdrop-saturate-150 border border-white/20 shadow-2xl p-2 z-30 text-white"
+                     style="display:none;">
+                    <div class="max-h-48 overflow-y-auto space-y-0.5">
+                        <template x-for="board in window.failerryBoards || []" :key="board.id">
+                            <button @click="
+                                saving = true;
+                                axios.post('{{ route('pins.store') }}', { photo_id: {{ $photo->id }}, board_id: board.id })
+                                .then(res => { window.showToast(res.data.message); showBoards = false; saved = true; })
+                                .catch(err => {
+                                    if (err.response?.status === 409) {
+                                        axios.delete('{{ route('pins.destroy') }}', { data: { photo_id: {{ $photo->id }}, board_id: board.id } })
+                                        .then(res => { window.showToast('Foto dihapus dari board.'); showBoards = false; saved = false; })
+                                        .catch(() => window.showToast('Gagal menghapus simpanan', 'error'));
+                                    } else {
+                                        window.showToast(err.response?.data?.message || 'Gagal menyimpan', 'error');
+                                    }
+                                })
+                                .finally(() => saving = false);"
+                                class="w-full text-left px-3.5 py-2 rounded-xl text-xs font-semibold hover:bg-white/20 transition-colors truncate">
+                                <span x-text="board.title"></span>
+                            </button>
+                        </template>
+                        <div x-show="(window.failerryBoards || []).length === 0" class="px-3 py-2 text-xs text-white/70 text-center">
+                            Belum ada board.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        @endauth
+        @guest
+            <a href="{{ route('login') }}"
+               class="h-8 px-3.5 rounded-full text-xs font-bold bg-white/15 hover:bg-white/25 backdrop-blur-xl border border-white/30 text-white flex items-center transition-all">
+                Simpan
+            </a>
+        @endguest
+    </div>
 
- <!-- More options -->
- <div x-data="{ openOptions: false }" class="relative shrink-0">
- <button @click="openOptions = !openOptions"
- class="w-8 h-8 rounded-full flex items-center justify-center transition-colors"
- style="background:rgba(255,248,237,0.9);color:#5C3A21;">
- <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
- </button>
- <div x-show="openOptions" @click.away="openOptions = false"
- class="absolute bottom-full right-0 mb-2 w-48 rounded-xl shadow-warm py-1 z-50 overflow-hidden"
- style="background:#FFF8ED;border:1px solid #E3C79A;display:none;">
- <button @click="navigator.clipboard.writeText('{{ route('photos.show', $photo) }}'); window.showToast('Tautan disalin!'); openOptions = false;"
- class="w-full text-left px-4 py-2.5 flex items-center gap-2 text-sm transition-colors"
- style="color:#5C3A21;" onmouseover="this.style.background='#F5E6CE'" onmouseout="this.style.background=''">
- <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path></svg>
- Salin Tautan
- </button>
- <a href="{{ route('photos.download', $photo) }}"
- class="w-full text-left px-4 py-2.5 flex items-center gap-2 text-sm transition-colors"
- style="color:#5C3A21;" onmouseover="this.style.background='#F5E6CE'" onmouseout="this.style.background=''">
- <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
- Unduh
- </a>
- </div>
- </div>
- </div>
- </div>
+    <!-- Frosted Glass Bottom Overlay on Hover -->
+    <div x-show="hovered" 
+         x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="opacity-0 translate-y-2 backdrop-blur-none"
+         x-transition:enter-end="opacity-100 translate-y-0 backdrop-blur-xl"
+         x-transition:leave="transition ease-in duration-200"
+         x-transition:leave-start="opacity-100 translate-y-0 backdrop-blur-xl"
+         x-transition:leave-end="opacity-0 translate-y-2 backdrop-blur-none"
+         class="absolute inset-0 bg-white/10 backdrop-blur-xl backdrop-saturate-150 border border-white/20 p-4 flex flex-col justify-end z-20 pointer-events-auto transition-all"
+         style="display: none;">
+
+        <div class="flex items-end justify-between gap-2">
+            <!-- Title & User info -->
+            <div class="flex flex-col gap-1 max-w-[75%]">
+                <a href="{{ route('photos.show', $photo->uid ?? $photo->id) }}" 
+                   class="font-bold text-white text-sm hover:underline drop-shadow truncate">
+                    {{ $photo->title }}
+                </a>
+                <a href="{{ route('profile.show', $photo->user) }}" class="flex items-center gap-1.5 hover:opacity-90 transition-opacity">
+                    <img src="{{ $photo->user->avatar_url }}" alt="{{ $photo->user->name }}" class="w-5 h-5 rounded-full object-cover border border-white/30" />
+                    <span class="text-[11px] font-bold text-white/90 truncate">@ {{ $photo->user->username }}</span>
+                    @if($photo->user->is_verified ?? false)
+                        <x-verified-badge size="w-3.5 h-3.5" checkSize="w-2 h-2" />
+                    @endif
+                </a>
+            </div>
+
+            <!-- More Options Button -->
+            <div class="relative shrink-0">
+                <button @click.prevent="openOptions = !openOptions"
+                        class="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 border border-white/30 flex items-center justify-center text-white transition-all shadow-md">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
+                </button>
+
+                <!-- Options Dropdown (Frosted Glass) -->
+                <div x-show="openOptions" 
+                     @click.away="openOptions = false"
+                     x-transition:enter="transition ease-out duration-200"
+                     x-transition:enter-start="opacity-0 scale-95"
+                     x-transition:enter-end="opacity-100 scale-100"
+                     class="absolute bottom-full right-0 mb-2 w-44 rounded-[16px] bg-white/20 backdrop-blur-xl backdrop-saturate-150 border border-white/20 shadow-2xl p-1.5 z-50 text-white"
+                     style="display:none;">
+                    <button @click="navigator.clipboard.writeText('{{ route('photos.show', $photo->uid ?? $photo->id) }}'); if(window.showToast) window.showToast('Tautan disalin!'); openOptions = false;"
+                            class="w-full text-left px-3 py-2 flex items-center gap-2 text-xs font-medium rounded-xl hover:bg-white/20 transition-colors">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path></svg>
+                        Salin Tautan
+                    </button>
+                    <a href="{{ route('photos.download', $photo) }}"
+                       class="w-full text-left px-3 py-2 flex items-center gap-2 text-xs font-medium rounded-xl hover:bg-white/20 transition-colors">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                        Unduh
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
+
+<style>
+    @supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+        .backdrop-blur-xl, .backdrop-blur-md {
+            background-color: rgba(255, 248, 237, 0.95) !important;
+            color: #3B2417 !important;
+        }
+    }
+</style>

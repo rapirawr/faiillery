@@ -1,4 +1,4 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 
 @section('content')
 <div class="w-full max-w-7xl mx-auto pt-8">
@@ -81,7 +81,15 @@
  }
  }">
  @if(auth()->check() && auth()->id() === $user->id)
- <a href="{{ route('profile.edit') }}" class="btn-secondary">Edit Profil</a>
+ <div class="flex gap-2">
+     <a href="{{ route('profile.edit') }}" class="btn-secondary">Edit Profil</a>
+     <a href="{{ route('profile.analytics') }}" class="btn-primary flex items-center gap-1.5 px-6 py-2.5 rounded-full font-bold transition-all active:scale-95">
+         <svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+             <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+         </svg>
+         <span>Analisis</span>
+     </a>
+ </div>
  @else
  <button 
  @click="toggleFollow()" 

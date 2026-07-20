@@ -180,24 +180,11 @@ class PhotoController extends Controller
     /**
      * Proxy download to force browser download for cross-origin S3/Supabase images.
      *
-     * Fixes applied vs. the original version:
-     *  - Added Content-Length header so the browser knows the exact expected
-     *    file size (prevents "corrupted/truncated file" on flaky connections).
-     *  - Validate that the response body is not empty before proceeding.
-     *  - Expanded mime <-> extension maps (bmp, svg, tiff, heic/heif) so files
-     *    in those formats don't lose/mismatch their extension.
-     *  - On failure, we no longer silently redirect to the raw image_url
-     *    (which can serve an HTML error page disguised as an image if the
-     *    URL is expired/protected/CORS-blocked). Instead we abort with a
-     *    proper HTTP error so the failure is visible and diagnosable.
-     *  - Removed 'verify' => false (disabling SSL verification) unless your
-     *    storage provider specifically requires it for self-signed certs.
-     */
-    /**
-     * Proxy download to force browser download for cross-origin S3/Supabase images.
+     * FIX: rewind() pada remote S3 stream tidak me-reset pointer ke byte 0.
+     * Akibatnya fpassthru() melewatkan 512 byte pertama yang sudah di-fread()
+     * untuk deteksi MIME — membuat file hasil download corrupt/truncated.
      *
-     * Goal: selalu kirim bytes binary image yang valid (bukan HTML error/redirect)
-     * supaya file hasil download tidak rusak/unsupported.
+     * Solusi: hapus fread+rewind, deteksi MIME cukup dari extension saja.
      */
     public function download(Photo $photo)
     {
@@ -212,6 +199,11 @@ class PhotoController extends Controller
             'webp' => 'image/webp',
             'gif'  => 'image/gif',
             'avif' => 'image/avif',
+            'bmp'  => 'image/bmp',
+            'svg'  => 'image/svg+xml',
+            'tiff' => 'image/tiff',
+            'heic' => 'image/heic',
+            'heif' => 'image/heif',
             'mp4'  => 'video/mp4',
             'mov'  => 'video/quicktime',
             'webm' => 'video/webm',
@@ -222,38 +214,50 @@ class PhotoController extends Controller
         try {
             $disk = \Illuminate\Support\Facades\Storage::disk('s3');
 
-            abort_unless($disk->exists($storedPath), 404, 'File not found');
+            abort_unless($disk->exists($storedPath), 404, 'File not found in storage');
 
+            // Ambil ukuran SEBELUM membuka stream
+            $size = $disk->size($storedPath);
+
+            // Buka stream SEKALI dan TIDAK fread/rewind — langsung stream penuh
             $stream = $disk->readStream($storedPath);
-            $size   = $disk->size($storedPath);
 
-            // Detect real MIME from first bytes
-            $chunk    = fread($stream, 512);
-            rewind($stream);
-            $detected = (new \finfo(FILEINFO_MIME_TYPE))->buffer($chunk);
-            if ($detected && (str_starts_with($detected, 'image/') || str_starts_with($detected, 'video/'))) {
-                $mimeType = $detected;
-            }
+            abort_unless(is_resource($stream), 500, 'Failed to open file stream');
 
-            \Illuminate\Support\Facades\Log::info('Download', [
-                'path' => $storedPath, 'mime' => $mimeType, 'size' => $size,
+            \Illuminate\Support\Facades\Log::info('Photo download', [
+                'photo_id' => $photo->id,
+                'path'     => $storedPath,
+                'mime'     => $mimeType,
+                'size'     => $size,
             ]);
 
+            // Flush output buffer agar tidak ada karakter/whitespace yang bercampur
+            while (ob_get_level()) {
+                ob_end_clean();
+            }
+
             return response()->stream(function () use ($stream) {
+                // Stream langsung ke output tanpa buffer tambahan
                 fpassthru($stream);
-                if (is_resource($stream)) fclose($stream);
+                if (is_resource($stream)) {
+                    fclose($stream);
+                }
             }, 200, [
-                'Content-Type'        => $mimeType,
-                'Content-Disposition' => 'attachment; filename="' . $filename . '"',
-                'Content-Length'      => $size,
-                'Cache-Control'       => 'no-cache',
+                'Content-Type'              => $mimeType,
+                'Content-Disposition'       => 'attachment; filename="' . $filename . '"',
+                'Content-Length'            => $size,
+                'Cache-Control'             => 'no-store, no-cache, must-revalidate',
+                'X-Content-Type-Options'    => 'nosniff',
             ]);
 
         } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::error('Download failed: ' . $e->getMessage(), [
-                'path' => $storedPath,
+            \Illuminate\Support\Facades\Log::error('Photo download failed', [
+                'photo_id' => $photo->id,
+                'path'     => $storedPath,
+                'error'    => $e->getMessage(),
             ]);
-            return redirect()->away($photo->image_url);
+
+            abort(500, 'Download gagal: ' . $e->getMessage());
         }
     }
 

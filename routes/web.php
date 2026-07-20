@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 
 use App\Http\Controllers\BoardController;
 use App\Http\Controllers\CommentController;
@@ -75,11 +75,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Messages
     Route::get('/messages', [MessageController::class, 'index'])->name('messages.index');
+    Route::post('/messages/share-photo', [MessageController::class, 'sharePhoto'])->name('messages.share');
+    Route::get('/api/conversations-list', [MessageController::class, 'getConversationsList']);
     Route::get('/messages/{user:username}', [MessageController::class, 'show'])->name('messages.show');
     Route::post('/messages/{user:username}', [MessageController::class, 'store'])->name('messages.store');
 
     // Settings
     Route::get('/settings', [SettingsController::class, 'showSettings'])->name('profile.edit');
+    Route::get('/profile/analytics', [ProfileController::class, 'analytics'])->name('profile.analytics');
     Route::patch('/settings', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/settings', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
@@ -125,6 +128,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
             // Photo Management
             Route::get('/photos', [\App\Http\Controllers\Admin\AdminController::class, 'photos'])->name('photos');
             Route::delete('/photos/{photo}', [\App\Http\Controllers\Admin\AdminController::class, 'deletePhoto'])->name('photos.delete');
+            // Fitur 4: Bulk Delete
+            Route::post('/photos/bulk-delete', [\App\Http\Controllers\Admin\AdminController::class, 'bulkDeletePhotos'])->name('photos.bulk-delete');
 
             // Global Announcement
             Route::get('/announcement', [\App\Http\Controllers\Admin\AdminController::class, 'announcement'])->name('announcement');
@@ -143,6 +148,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('/cms', [\App\Http\Controllers\Admin\CmsController::class, 'index'])->name('cms');
             Route::put('/cms', [\App\Http\Controllers\Admin\CmsController::class, 'update'])->name('cms.update');
             Route::post('/cms/reset', [\App\Http\Controllers\Admin\CmsController::class, 'reset'])->name('cms.reset');
+
+            // Fitur 5: Online Users (AJAX polling)
+            Route::get('/online-users', [\App\Http\Controllers\Admin\AdminController::class, 'onlineUsers'])->name('online-users');
+
+            // Fitur 1: Activity Log
+            Route::get('/activity-log', [\App\Http\Controllers\Admin\AdminController::class, 'activityLog'])->name('activity-log');
         });
     });
 });

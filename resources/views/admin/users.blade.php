@@ -1,9 +1,40 @@
-﻿@extends('layouts.admin')
+@extends('layouts.admin')
 
 @section('page-title', 'Users')
 @section('page-subtitle', 'Kelola akun dan permissions')
 
 @section('content')
+
+<!-- Fitur 2: Search & Filter Bar -->
+<div class="flex flex-col sm:flex-row gap-3 mb-5">
+    <form method="GET" action="{{ route('admin.users') }}" class="flex flex-1 gap-3">
+        <div class="relative flex-1">
+            <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none" style="color:#C69C6D;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+            <input type="text" name="search" value="{{ $search ?? '' }}" placeholder="Cari nama, username, atau email…"
+                   class="w-full pl-9 pr-4 py-2.5 rounded-xl text-sm outline-none border transition-all"
+                   style="background:#FEFAF4;border-color:#E3C79A;color:#3B2417;"
+                   onfocus="this.style.borderColor='#8B5E3C'" onblur="this.style.borderColor='#E3C79A'">
+        </div>
+        <select name="filter" onchange="this.form.submit()"
+                class="px-4 py-2.5 rounded-xl text-sm outline-none border cursor-pointer"
+                style="background:#FEFAF4;border-color:#E3C79A;color:#3B2417;">
+            <option value="all"         {{ ($filter ?? 'all') === 'all'          ? 'selected' : '' }}>All Users</option>
+            <option value="admin"       {{ ($filter ?? '') === 'admin'           ? 'selected' : '' }}>Admins Only</option>
+            <option value="verified"    {{ ($filter ?? '') === 'verified'        ? 'selected' : '' }}>Verified Only</option>
+            <option value="shadowbanned" {{ ($filter ?? '') === 'shadowbanned'   ? 'selected' : '' }}>Shadowbanned</option>
+        </select>
+        <button type="submit" class="px-4 py-2.5 rounded-xl text-sm font-semibold text-white transition-all"
+                style="background:#8B5E3C;" onmouseover="this.style.background='#5C3A21'" onmouseout="this.style.background='#8B5E3C'">
+            Search
+        </button>
+        @if($search || ($filter ?? 'all') !== 'all')
+        <a href="{{ route('admin.users') }}" class="px-4 py-2.5 rounded-xl text-sm font-semibold transition-all flex items-center"
+           style="background:#F5E6CE;color:#8B5E3C;" onmouseover="this.style.background='#E3C79A'" onmouseout="this.style.background='#F5E6CE'">
+            Clear
+        </a>
+        @endif
+    </form>
+</div>
 
 <div class="admin-card rounded-2xl overflow-hidden">
     <table class="w-full admin-table">

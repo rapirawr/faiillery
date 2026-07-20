@@ -2,8 +2,7 @@
      PARTIAL: photos/partials/photo-comments.blade.php
      Comments list with preview + "see all" + realtime
      ===================================================================== --}}
-<div class="px-3 pb-2"
-     x-data="{
+<div x-data="{
          comments: {{ $photo->comments->map(fn($c) => [
              'id'         => $c->id,
              'body'       => $c->body,
@@ -16,8 +15,6 @@
              ]
          ])->toJson() }},
          showAll: false,
-         submitting: false,
-         newComment: '',
 
          init() {
              /* Listen for new comments from local inputs */
@@ -25,7 +22,7 @@
                  this.comments.unshift(e.detail);
              });
 
-             /* realtime new comments via Supabase */
+             /* Realtime new comments via Supabase */
              if (window.supabase) {
                  window.supabase
                      .channel('public:comments:{{ $photo->id }}')
@@ -36,29 +33,11 @@
                          filter: 'photo_id=eq.{{ $photo->id }}'
                      }, payload => {
                          if (!this.comments.find(c => c.id === payload.new.id)) {
-                             /* lightweight: just mark as new – full fetch not needed */
+                             /* Payload handling if needed */
                          }
                      })
                      .subscribe();
              }
-         },
-
-         postComment() {
-             if (!this.newComment.trim()) return;
-             this.submitting = true;
-             axios.post('{{ route('comments.store', $photo) }}', { body: this.newComment })
-                 .then(res => {
-                     this.comments.unshift({
-                         id: res.data.comment.id,
-                         body: res.data.comment.body,
-                         created_at: 'Baru saja',
-                         user: res.data.user
-                     });
-                     this.newComment = '';
-                     window.showToast('Komentar terkirim!');
-                 })
-                 .catch(err => window.showToast(err.response?.data?.message || 'Gagal mengirim komentar', 'error'))
-                 .finally(() => this.submitting = false);
          },
 
          deleteComment(id) {
@@ -73,76 +52,54 @@
          }
      }">
 
-  <div class="bg-white/25 dark:bg-neutral-900/40 backdrop-blur-xl backdrop-saturate-150 border border-white/40 dark:border-white/10 shadow-lg shadow-black/10 rounded-2xl">
-    {{-- Preview: show 2 or all --}}
-    <div class="px-4 py-3 space-y-3">
+    <div class="space-y-3">
+        <h3 class="text-xs font-bold uppercase tracking-wider text-caramel dark:text-gray-400 mb-2">Komentar</h3>
 
-        {{-- "Lihat semua" link --}}
-        <template x-if="comments.length > 2 && !showAll">
+        {{-- Toggle see all --}}
+        <template x-if="comments.length > 3 && !showAll">
             <button @click="showAll = true"
-                    class="text-[13px] text-gray-400 dark:text-gray-500 hover:text-gray-600 transition-colors font-medium">
+                    class="text-xs text-brown dark:text-caramel font-semibold hover:underline transition-colors block mb-3">
                 Lihat semua <span x-text="comments.length"></span> komentar
             </button>
         </template>
 
-        <template x-for="(comment, idx) in (showAll ? comments : comments.slice(0, 2))" :key="comment.id">
-            <div class="flex gap-3 group">
-                <a :href="'/user/' + comment.user.username" class="shrink-0">
-                    <img :src="comment.user.avatar_url"
-                         class="w-7 h-7 rounded-full object-cover ring-1 ring-gray-200 dark:ring-white/10">
-                </a>
-                <div class="flex-1 min-w-0">
-                    <p class="text-[13px] text-dark dark:text-white leading-snug">
-                        <a :href="'/user/' + comment.user.username" class="font-semibold hover:underline mr-1" x-text="comment.user.name"></a>
-                        <span x-text="comment.body"></span>
-                    </p>
-                    <div class="flex items-center gap-3 mt-1">
-                        <span class="text-[11px] text-gray-400" x-text="comment.created_at"></span>
+        {{-- List --}}
+        <div class="space-y-3">
+            <template x-for="(comment, idx) in (showAll ? comments : comments.slice(0, 3))" :key="comment.id">
+                <div class="flex gap-2.5 group items-start">
+                    <a :href="'/user/' + comment.user.username" class="shrink-0 pt-0.5">
+                        <img :src="comment.user.avatar_url"
+                             class="w-7 h-7 rounded-full object-cover ring-1 ring-sand">
+                    </a>
+                    <div class="flex-1 min-w-0 bg-white/70 dark:bg-white/5 rounded-2xl p-2.5 border border-sand/20">
+                        <div class="flex items-center justify-between gap-2">
+                            <a :href="'/user/' + comment.user.username" class="font-bold text-xs text-cocoa dark:text-white hover:underline truncate" x-text="comment.user.name"></a>
+                            <span class="text-[10px] text-caramel dark:text-gray-400 shrink-0" x-text="comment.created_at"></span>
+                        </div>
+                        <p class="text-xs text-cocoa/90 dark:text-gray-200 mt-1 leading-relaxed break-words" x-text="comment.body"></p>
+
                         @auth
                         <template x-if="comment.user.username === '{{ auth()->user()->username }}'">
-                            <button @click="deleteComment(comment.id)"
-                                    class="text-[11px] text-red-400 opacity-0 group-hover:opacity-100 transition-opacity hover:text-red-600">Hapus</button>
+                            <div class="mt-1 text-right">
+                                <button @click="deleteComment(comment.id)"
+                                        class="text-[10px] text-red-500 hover:text-red-700 font-medium opacity-0 group-hover:opacity-100 transition-opacity">Hapus</button>
+                            </div>
                         </template>
                         @endauth
                     </div>
                 </div>
-            </div>
-        </template>
+            </template>
+        </div>
 
+        {{-- Empty state --}}
         <template x-if="comments.length === 0">
-            <p class="text-[13px] text-gray-400 dark:text-gray-500 text-center py-2">Belum ada komentar. Jadilah yang pertama!</p>
+            <div class="text-center py-6 px-4 bg-white/40 dark:bg-white/5 rounded-2xl border border-dashed border-sand/50">
+                <svg class="w-8 h-8 mx-auto text-caramel/60 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                </svg>
+                <p class="text-xs font-medium text-cocoa/70 dark:text-gray-400">Belum ada komentar.</p>
+                <p class="text-[11px] text-caramel dark:text-gray-500 mt-0.5">Jadilah yang pertama memberikan respon!</p>
+            </div>
         </template>
     </div>
-
-    {{-- ── Comment input, inside the same card ── --}}
-    <div class="px-4 py-3 border-t border-gray-100 dark:border-white/10">
-        @auth
-            <div class="flex items-center gap-3">
-                <img src="{{ auth()->user()->avatar_url }}"
-                     class="w-8 h-8 rounded-full object-cover shrink-0 ring-1 ring-gray-200 dark:ring-white/10">
-
-                <div class="flex-1 relative flex items-center">
-                    <input id="comment-input-field"
-                           type="text"
-                           x-model="newComment"
-                           @keydown.enter.prevent="postComment()"
-                           placeholder="Tambahkan komentar..."
-                           class="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-full py-2 pl-4 pr-16 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-dark dark:text-white placeholder-gray-400">
-
-                    <button @click="postComment()"
-                            :disabled="submitting || !newComment.trim()"
-                            class="absolute right-3 text-sm font-semibold text-blue-500 hover:text-blue-600 disabled:opacity-40 disabled:pointer-events-none transition-opacity">
-                        Kirim
-                    </button>
-                </div>
-            </div>
-        @endauth
-        @guest
-            <div class="py-1 text-center">
-                <p class="text-xs text-gray-500 mb-2">Ingin berdiskusi? Masuk untuk menulis komentar.</p>
-                <a href="{{ route('login') }}" class="px-5 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-full text-xs font-bold inline-block transition-colors">Masuk</a>
-            </div>
-        @endguest
-    </div>
-  </div>
 </div>

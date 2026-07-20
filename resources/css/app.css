@@ -152,6 +152,64 @@
         border-radius: 14px;
         box-shadow: 0 1px 6px rgba(91,58,33,0.06);
     }
+
+    /* ── iOS Frosted Glass Design System ─────────────────────────────── */
+    .glass-card, .glass-panel {
+        background: rgba(255, 248, 237, 0.65);
+        backdrop-filter: saturate(180%) blur(20px);
+        -webkit-backdrop-filter: saturate(180%) blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.35);
+        border-radius: 20px;
+        box-shadow: 0 10px 32px -4px rgba(91, 58, 33, 0.12), 0 1px 0 rgba(255, 255, 255, 0.6) inset;
+    }
+
+    .glass-pill {
+        background: rgba(227, 199, 154, 0.35);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 9999px;
+        transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .glass-pill:hover {
+        background: rgba(227, 199, 154, 0.55);
+        border-color: rgba(255, 255, 255, 0.5);
+        transform: translateY(-1px);
+    }
+    .glass-pill:active {
+        transform: scale(0.96);
+    }
+
+    .glass-dropdown, .glass-modal {
+        background: rgba(255, 248, 237, 0.85);
+        backdrop-filter: saturate(190%) blur(24px);
+        -webkit-backdrop-filter: saturate(190%) blur(24px);
+        border: 1px solid rgba(255, 255, 255, 0.4);
+        border-radius: 24px;
+        box-shadow: 0 20px 50px -10px rgba(91, 58, 33, 0.20), 0 1px 0 rgba(255, 255, 255, 0.7) inset;
+    }
+
+    /* Browser Fallback (Legacy browsers without backdrop-filter support) */
+    @supports not ((-webkit-backdrop-filter: blur(20px)) or (backdrop-filter: blur(20px))) {
+        .glass-card, .glass-panel {
+            background: #FFF8ED !important;
+            border-color: #E3C79A !important;
+        }
+        .glass-pill {
+            background: #F5E6CE !important;
+            border-color: #E3C79A !important;
+        }
+        .glass-dropdown, .glass-modal {
+            background: #FFF8ED !important;
+            border-color: #E3C79A !important;
+        }
+    }
+
+    /* Accessibility Focus-Visible Ring */
+    button:focus-visible, a:focus-visible, input:focus-visible {
+        outline: 2px solid var(--brown) !important;
+        outline-offset: 2px !important;
+    }
 }
 
 /* ── Utilities ─────────────────────────────────────────────────── */

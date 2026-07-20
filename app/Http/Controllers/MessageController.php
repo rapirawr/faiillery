@@ -101,4 +101,76 @@ class MessageController extends Controller
 
         return back();
     }
+
+    /**
+     * Share a photo into a direct message chat.
+     */
+    public function sharePhoto(Request $request): \Illuminate\Http\JsonResponse
+    {
+        if (!\App\Models\Setting::enabled('allow_messages', true)) {
+            return response()->json(['success' => false, 'message' => 'Fitur pesan sedang dinonaktifkan.'], 403);
+        }
+
+        $request->validate([
+            'username' => 'required|string|exists:users,username',
+            'photo_url' => 'required|url',
+            'photo_title' => 'required|string',
+        ]);
+
+        $recipient = User::where('username', $request->username)->firstOrFail();
+        
+        if ($recipient->id === Auth::id()) {
+            return response()->json(['success' => false, 'message' => 'Anda tidak bisa mengirim pesan ke diri sendiri.'], 422);
+        }
+
+        $conversation = Conversation::where(function($query) use ($recipient) {
+            $query->where('user_one_id', Auth::id())->where('user_two_id', $recipient->id);
+        })->orWhere(function($query) use ($recipient) {
+            $query->where('user_one_id', $recipient->id)->where('user_two_id', Auth::id());
+        })->first();
+
+        if (!$conversation) {
+            $conversation = Conversation::create([
+                'user_one_id' => min(Auth::id(), $recipient->id),
+                'user_two_id' => max(Auth::id(), $recipient->id),
+            ]);
+        }
+
+        $body = "Membagikan karya: *" . $request->photo_title . "*\n" . $request->photo_url;
+        
+        $message = $conversation->messages()->create([
+            'sender_id' => Auth::id(),
+            'body' => $body,
+        ]);
+
+        $conversation->update(['last_message_at' => now()]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Foto berhasil dibagikan ke obrolan.',
+        ]);
+    }
+
+    /**
+     * Get list of active chat partners for sharing.
+     */
+    public function getConversationsList(): \Illuminate\Http\JsonResponse
+    {
+        $conversations = Conversation::where('user_one_id', Auth::id())
+            ->orWhere('user_two_id', Auth::id())
+            ->with(['userOne', 'userTwo'])
+            ->orderByDesc('last_message_at')
+            ->take(8)
+            ->get()
+            ->map(function ($convo) {
+                $otherUser = $convo->user_one_id === Auth::id() ? $convo->userTwo : $convo->userOne;
+                return [
+                    'username' => $otherUser->username,
+                    'name' => $otherUser->name,
+                    'avatar' => $otherUser->avatar_url,
+                ];
+            });
+
+        return response()->json($conversations);
+    }
 }

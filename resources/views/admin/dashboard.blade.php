@@ -1,12 +1,12 @@
-﻿@extends('layouts.admin')
+@extends('layouts.admin')
 
 @section('page-title', 'Dashboard')
 @section('page-subtitle', 'Ringkasan aktivitas platform')
 
 @section('content')
 
-<!-- Stats Grid -->
-<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+<!-- Stats Grid — Row 1 -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-5">
     <div class="admin-card stat-card-accent p-6 rounded-2xl" style="box-shadow:0 4px 20px rgba(139,94,60,0.25);">
         <div class="flex items-center justify-between mb-4">
             <div class="text-xs font-bold uppercase tracking-widest" style="color:rgba(255,248,237,0.75);">Total Users</div>
@@ -49,6 +49,70 @@
         </div>
         <div class="text-3xl font-bold" style="color:#3B2417;">{{ number_format($stats['comments_count']) }}</div>
         <div class="text-xs mt-2" style="color:#C69C6D;">User interactions</div>
+    </div>
+</div>
+
+<!-- Fitur 3: Stats Row 2 — Likes, Follows, Views + Fitur 5: Online Users -->
+<div class="grid grid-cols-2 sm:grid-cols-4 gap-5 mb-8">
+    <!-- Likes -->
+    <div class="admin-card p-5 rounded-2xl">
+        <div class="flex items-center justify-between mb-3">
+            <div class="text-xs font-bold uppercase tracking-widest" style="color:#C69C6D;">Total Likes</div>
+            <div class="w-8 h-8 rounded-xl flex items-center justify-center" style="background:#fef2f2;">
+                <svg class="w-4 h-4" style="color:#e11d48;" fill="currentColor" viewBox="0 0 24 24"><path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+            </div>
+        </div>
+        <div class="text-2xl font-bold" style="color:#3B2417;">{{ number_format($stats['likes_count']) }}</div>
+        <div class="text-xs mt-1" style="color:#C69C6D;">Engagement</div>
+    </div>
+
+    <!-- Follows -->
+    <div class="admin-card p-5 rounded-2xl">
+        <div class="flex items-center justify-between mb-3">
+            <div class="text-xs font-bold uppercase tracking-widest" style="color:#C69C6D;">Follows</div>
+            <div class="w-8 h-8 rounded-xl flex items-center justify-center" style="background:#eff6ff;">
+                <svg class="w-4 h-4" style="color:#3b82f6;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
+            </div>
+        </div>
+        <div class="text-2xl font-bold" style="color:#3B2417;">{{ number_format($stats['follows_count']) }}</div>
+        <div class="text-xs mt-1" style="color:#C69C6D;">Connections</div>
+    </div>
+
+    <!-- Views -->
+    <div class="admin-card p-5 rounded-2xl">
+        <div class="flex items-center justify-between mb-3">
+            <div class="text-xs font-bold uppercase tracking-widest" style="color:#C69C6D;">Total Views</div>
+            <div class="w-8 h-8 rounded-xl flex items-center justify-center" style="background:#f0fdf4;">
+                <svg class="w-4 h-4" style="color:#16a34a;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+            </div>
+        </div>
+        <div class="text-2xl font-bold" style="color:#3B2417;">{{ number_format($stats['views_count']) }}</div>
+        <div class="text-xs mt-1" style="color:#C69C6D;">Photo impressions</div>
+    </div>
+
+    <!-- Fitur 5: Online Users Live Counter -->
+    <div class="admin-card p-5 rounded-2xl"
+         x-data="{ count: {{ $stats['online_count'] }}, loading: false }"
+         x-init="setInterval(async () => {
+             loading = true;
+             try {
+                 const res = await fetch('{{ route('admin.online-users') }}');
+                 const data = await res.json();
+                 count = data.count;
+             } catch(e) {}
+             loading = false;
+         }, 30000)">
+        <div class="flex items-center justify-between mb-3">
+            <div class="text-xs font-bold uppercase tracking-widest" style="color:#C69C6D;">Online Now</div>
+            <div class="w-8 h-8 rounded-xl flex items-center justify-center" style="background:#f0fdf4;">
+                <span class="w-3 h-3 rounded-full bg-green-500 animate-pulse inline-block"></span>
+            </div>
+        </div>
+        <div class="text-2xl font-bold" style="color:#3B2417;" x-text="count">{{ $stats['online_count'] }}</div>
+        <div class="text-xs mt-1 flex items-center gap-1" style="color:#C69C6D;">
+            <span>Active last 5 min</span>
+            <svg x-show="loading" class="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+        </div>
     </div>
 </div>
 

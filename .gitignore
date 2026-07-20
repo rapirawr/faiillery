@@ -26,3 +26,5 @@ Homestead.yaml
 Thumbs.db
 push.ps1
 push.bat
+/public/index.php
+/prompt
