@@ -22,6 +22,7 @@ class PhotoService
         ?string $description = null,
         ?string $tags = '',
         ?int $boardId = null,
+        ?UploadedFile $thumbnailFile = null,
     ): Photo {
         $mimeType = $file->getMimeType();
         $isImage = str_starts_with($mimeType, 'image/');
@@ -41,8 +42,12 @@ class PhotoService
         $disk = Storage::disk('s3');
         $imagePath = $disk->putFile('photos/originals', $file, 'public');
 
-        // Generate thumbnail
-        $thumbnailPath = $this->generateThumbnail($file, $imagePath);
+        // Generate or upload thumbnail
+        if ($thumbnailFile) {
+            $thumbnailPath = $disk->putFile('photos/thumbnails', $thumbnailFile, 'public');
+        } else {
+            $thumbnailPath = $this->generateThumbnail($file, $imagePath);
+        }
 
         // Get dominant color
         $dominantColor = $this->getDominantColor($file);

@@ -23,6 +23,8 @@ class StorePhotoRequest extends FormRequest
         return [
             'image'   => 'required|array',
             'image.*' => "file|mimes:{$mimes}|max:{$maxKb}",
+            'thumbnail' => 'nullable|array',
+            'thumbnail.*' => 'nullable|file|image|max:10240',
             'title'       => 'nullable|string|max:255',
             'description' => 'nullable|string|max:2000',
             'tags'        => 'nullable|string|max:500',

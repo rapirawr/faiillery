@@ -76,10 +76,6 @@
         </div>
     </div>
 
-    <!-- Upload Photo Modal (Frosted Glass) -->
-    @if(!request()->routeIs('admin.*'))
-        @include('components.frosted.upload-modal')
-    @endif
 
     <!-- Theater Mode Slideshow Overlay (Frosted Glass) -->
     <div x-data="theaterModeData"

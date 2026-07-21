@@ -102,7 +102,7 @@
     </main>
 
     <!-- Bottom Mobile Nav -->
-    @if(!request()->routeIs('photos.photobooth'))
+    @if(!request()->routeIs('photos.photobooth') && !request()->routeIs('photos.dome'))
         @include('components.bottom-nav')
     @endif
 

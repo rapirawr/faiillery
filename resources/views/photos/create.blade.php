@@ -73,6 +73,7 @@
  </div>
  
  <input type="file" id="imageUpload" name="image[]" class="hidden" accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm,video/quicktime" multiple @change="handleFileSelect($event)">
+ <input type="file" id="thumbnailUpload" name="thumbnail[]" class="hidden" multiple>
  </label>
 
  <!-- File Size Indicator -->
@@ -215,18 +216,60 @@ function uploadForm() {
  const isVid = file.type.startsWith('video/');
  const reader = new FileReader();
  reader.onload = (e) => {
- this.previews.push({
+ const previewItem = {
  file: file,
  url: e.target.result,
- isVideo: isVid
- });
+ isVideo: isVid,
+ thumbnailBlob: null
+ };
+ this.previews.push(previewItem);
  this.calculateTotalSize();
  this.syncInput();
+
+ if (isVid) {
+ this.extractVideoThumbnail(file, (blob) => {
+ previewItem.thumbnailBlob = blob;
+ this.syncInput();
+ });
+ }
  };
  reader.readAsDataURL(file);
  }
  });
  },
+
+  extractVideoThumbnail(file, callback) {
+  const video = document.createElement('video');
+  video.preload = 'metadata';
+  video.src = URL.createObjectURL(file);
+  video.muted = true;
+  video.playsInline = true;
+  video.onloadedmetadata = () => {
+  const seekTime = Math.min(1, video.duration / 2);
+  video.currentTime = seekTime;
+  };
+  video.onseeked = () => {
+  try {
+  const canvas = document.createElement('canvas');
+  canvas.width = video.videoWidth || 640;
+  canvas.height = video.videoHeight || 480;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+  canvas.toBlob((blob) => {
+  callback(blob);
+  URL.revokeObjectURL(video.src);
+  }, 'image/jpeg', 0.85);
+  } catch (err) {
+  console.error("Canvas export failed:", err);
+  URL.revokeObjectURL(video.src);
+  }
+  };
+  video.onerror = (e) => {
+  console.error("Video load error:", e);
+  URL.revokeObjectURL(video.src);
+  };
+  video.load();
+  },
  
  calculateTotalSize() {
  this.totalSize = this.previews.reduce((acc, p) => acc + p.file.size, 0);
@@ -248,9 +291,26 @@ function uploadForm() {
 
  syncInput() {
  const input = document.getElementById('imageUpload');
+ const thumbInput = document.getElementById('thumbnailUpload');
  const dataTransfer = new DataTransfer();
- this.previews.forEach(p => dataTransfer.items.add(p.file));
+ const thumbDataTransfer = new DataTransfer();
+
+ this.previews.forEach(p => {
+ dataTransfer.items.add(p.file);
+ if (p.isVideo && p.thumbnailBlob) {
+ const thumbFile = new File(
+ [p.thumbnailBlob], 
+ p.file.name.replace(/\.[^/.]+$/, "") + "_thumb.jpg", 
+ { type: "image/jpeg" }
+ );
+ thumbDataTransfer.items.add(thumbFile);
+ }
+ });
+
  input.files = dataTransfer.files;
+ if (thumbInput) {
+ thumbInput.files = thumbDataTransfer.files;
+ }
  }
  }
 }

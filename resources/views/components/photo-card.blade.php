@@ -13,7 +13,7 @@
         likesCount: {{ $photo->likes_count ?? 0 }},
         saved: false,
         openOptions: false,
-        showBoards: false,
+        showBoardsList: false,
         saving: false,
         toggleLike() {
             this.liked = !this.liked;
@@ -22,7 +22,7 @@
         }
      }" 
      @mouseenter="hovered = true" 
-     @mouseleave="hovered = false; openOptions = false; showBoards = false;"
+     @mouseleave="hovered = false; openOptions = false; showBoardsList = false;"
      class="relative group mb-4 break-inside-avoid rounded-[20px] overflow-hidden shadow-lg shadow-black/10 border border-white/20 transition-all duration-300 hover:shadow-2xl hover:shadow-black/20 transform hover:-translate-y-1"
      style="padding-bottom: {{ $aspectRatio }}%; background: {{ $dominantColor }};">
 
@@ -65,57 +65,7 @@
             <span x-text="likesCount"></span>
         </button>
 
-        <!-- Save Button -->
-        @auth
-            <div class="relative">
-                <button @click.prevent="showBoards = !showBoards"
-                        class="h-8 px-3.5 rounded-full text-xs font-bold transition-all active:scale-95 shadow-md flex items-center gap-1"
-                        :class="saved 
-                            ? 'bg-[#8B5E3C] border border-[#C69C6D] text-[#FFF8ED]' 
-                            : 'bg-white/15 hover:bg-white/25 backdrop-blur-xl backdrop-saturate-150 border border-white/30 text-white'">
-                    <span>Simpan</span>
-                </button>
-                <!-- Board Selector Dropdown (Frosted Glass) -->
-                <div x-show="showBoards" 
-                     @click.away="showBoards = false"
-                     x-transition:enter="transition ease-out duration-200"
-                     x-transition:enter-start="opacity-0 scale-95 -translate-y-2"
-                     x-transition:enter-end="opacity-100 scale-100 translate-y-0"
-                     class="absolute top-full right-0 mt-2 w-48 rounded-[20px] bg-white/20 backdrop-blur-xl backdrop-saturate-150 border border-white/20 shadow-2xl p-2 z-30 text-white"
-                     style="display:none;">
-                    <div class="max-h-48 overflow-y-auto space-y-0.5">
-                        <template x-for="board in window.failerryBoards || []" :key="board.id">
-                            <button @click="
-                                saving = true;
-                                axios.post('{{ route('pins.store') }}', { photo_id: {{ $photo->id }}, board_id: board.id })
-                                .then(res => { window.showToast(res.data.message); showBoards = false; saved = true; })
-                                .catch(err => {
-                                    if (err.response?.status === 409) {
-                                        axios.delete('{{ route('pins.destroy') }}', { data: { photo_id: {{ $photo->id }}, board_id: board.id } })
-                                        .then(res => { window.showToast('Foto dihapus dari board.'); showBoards = false; saved = false; })
-                                        .catch(() => window.showToast('Gagal menghapus simpanan', 'error'));
-                                    } else {
-                                        window.showToast(err.response?.data?.message || 'Gagal menyimpan', 'error');
-                                    }
-                                })
-                                .finally(() => saving = false);"
-                                class="w-full text-left px-3.5 py-2 rounded-xl text-xs font-semibold hover:bg-white/20 transition-colors truncate">
-                                <span x-text="board.title"></span>
-                            </button>
-                        </template>
-                        <div x-show="(window.failerryBoards || []).length === 0" class="px-3 py-2 text-xs text-white/70 text-center">
-                            Belum ada board.
-                        </div>
-                    </div>
-                </div>
-            </div>
-        @endauth
-        @guest
-            <a href="{{ route('login') }}"
-               class="h-8 px-3.5 rounded-full text-xs font-bold bg-white/15 hover:bg-white/25 backdrop-blur-xl border border-white/30 text-white flex items-center transition-all">
-                Simpan
-            </a>
-        @endguest
+
     </div>
 
     <!-- Frosted Glass Bottom Overlay on Hover -->
@@ -147,29 +97,93 @@
 
             <!-- More Options Button -->
             <div class="relative shrink-0">
-                <button @click.prevent="openOptions = !openOptions"
+                <button @click.prevent="openOptions = !openOptions; showBoardsList = false;"
                         class="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 border border-white/30 flex items-center justify-center text-white transition-all shadow-md">
                     <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
                 </button>
 
                 <!-- Options Dropdown (Frosted Glass) -->
                 <div x-show="openOptions" 
-                     @click.away="openOptions = false"
+                     @click.away="openOptions = false; showBoardsList = false;"
                      x-transition:enter="transition ease-out duration-200"
                      x-transition:enter-start="opacity-0 scale-95"
                      x-transition:enter-end="opacity-100 scale-100"
-                     class="absolute bottom-full right-0 mb-2 w-44 rounded-[16px] bg-white/20 backdrop-blur-xl backdrop-saturate-150 border border-white/20 shadow-2xl p-1.5 z-50 text-white"
+                     class="absolute bottom-full right-0 mb-2 w-48 rounded-[20px] bg-white/20 backdrop-blur-xl backdrop-saturate-150 border border-white/20 shadow-2xl p-2 z-50 text-white"
                      style="display:none;">
-                    <button @click="navigator.clipboard.writeText('{{ route('photos.show', $photo->uid ?? $photo->id) }}'); if(window.showToast) window.showToast('Tautan disalin!'); openOptions = false;"
-                            class="w-full text-left px-3 py-2 flex items-center gap-2 text-xs font-medium rounded-xl hover:bg-white/20 transition-colors">
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path></svg>
-                        Salin Tautan
-                    </button>
-                    <a href="{{ route('photos.download', $photo) }}"
-                       class="w-full text-left px-3 py-2 flex items-center gap-2 text-xs font-medium rounded-xl hover:bg-white/20 transition-colors">
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                        Unduh
-                    </a>
+                    
+                    <!-- Main Options Menu -->
+                    <div x-show="!showBoardsList">
+                        @auth
+                            <button @click="showBoardsList = true"
+                                    class="w-full text-left px-3 py-2.5 flex items-center gap-2 text-xs font-semibold rounded-xl hover:bg-white/20 transition-colors">
+                                <svg class="w-4 h-4 fill-none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+                                </svg>
+                                <span x-text="saved ? 'Tersimpan' : 'Simpan ke Papan'"></span>
+                            </button>
+                        @endauth
+                        @guest
+                            <a href="{{ route('login') }}"
+                               class="w-full text-left px-3 py-2.5 flex items-center gap-2 text-xs font-semibold rounded-xl hover:bg-white/20 transition-colors">
+                                <svg class="w-4 h-4 fill-none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+                                </svg>
+                                <span>Simpan ke Papan</span>
+                            </a>
+                        @endguest
+                        
+                        <button @click="navigator.clipboard.writeText('{{ route('photos.show', $photo->uid ?? $photo->id) }}'); if(window.showToast) window.showToast('Tautan disalin!'); openOptions = false;"
+                                class="w-full text-left px-3 py-2.5 flex items-center gap-2 text-xs font-semibold rounded-xl hover:bg-white/20 transition-colors">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path>
+                            </svg>
+                            Salin Tautan
+                        </button>
+                        
+                        <a href="{{ route('photos.download', $photo) }}"
+                           class="w-full text-left px-3 py-2.5 flex items-center gap-2 text-xs font-semibold rounded-xl hover:bg-white/20 transition-colors">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                            </svg>
+                            Unduh
+                        </a>
+                    </div>
+
+                    <!-- Board Selector Sub-Menu -->
+                    <div x-show="showBoardsList" style="display: none;">
+                        <div class="flex items-center gap-1 px-2 py-1.5 border-b border-white/10 mb-1.5 text-white/60">
+                            <button @click="showBoardsList = false" class="hover:text-white transition-colors">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+                                </svg>
+                            </button>
+                            <span class="text-[11px] font-bold uppercase tracking-wider">Pilih Papan</span>
+                        </div>
+                        <div class="max-h-40 overflow-y-auto space-y-0.5">
+                            <template x-for="board in window.failerryBoards || window.FaiilleryBoards || []" :key="board.id">
+                                <button @click="
+                                    saving = true;
+                                    axios.post('{{ route('pins.store') }}', { photo_id: {{ $photo->id }}, board_id: board.id })
+                                    .then(res => { window.showToast(res.data.message); openOptions = false; showBoardsList = false; saved = true; })
+                                    .catch(err => {
+                                        if (err.response?.status === 409) {
+                                            axios.delete('{{ route('pins.destroy') }}', { data: { photo_id: {{ $photo->id }}, board_id: board.id } })
+                                            .then(res => { window.showToast('Foto dihapus dari board.'); openOptions = false; showBoardsList = false; saved = false; })
+                                            .catch(() => window.showToast('Gagal menghapus simpanan', 'error'));
+                                        } else {
+                                            window.showToast(err.response?.data?.message || 'Gagal menyimpan', 'error');
+                                        }
+                                    })
+                                    .finally(() => saving = false);"
+                                    class="w-full text-left px-3.5 py-2 rounded-xl text-xs font-semibold hover:bg-white/20 transition-colors truncate">
+                                    <span x-text="board.title"></span>
+                                </button>
+                            </template>
+                            <div x-show="(window.failerryBoards || window.FaiilleryBoards || []).length === 0" class="px-3 py-2 text-xs text-white/70 text-center">
+                                Belum ada board.
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

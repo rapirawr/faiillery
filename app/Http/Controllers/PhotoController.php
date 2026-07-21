@@ -32,6 +32,10 @@ class PhotoController extends Controller
     public function store(StorePhotoRequest $request)
     {
         $files = $request->file('image');
+        $thumbnails = $request->file('thumbnail') ?: [];
+        if (!is_array($thumbnails)) {
+            $thumbnails = [$thumbnails];
+        }
         $uploadedPhotos = [];
 
         \Illuminate\Support\Facades\Log::info('Upload process started', ['files_count' => is_array($files) ? count($files) : ($files ? 1 : 0)]);
@@ -47,6 +51,17 @@ class PhotoController extends Controller
 
                 \Illuminate\Support\Facades\Log::info("Uploading file {$index}", ['filename' => $file->getClientOriginalName(), 'title' => $title]);
 
+                // Find corresponding thumbnail if it exists
+                $thumbnailFile = null;
+                $originalNameWithoutExt = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+                foreach ($thumbnails as $thumb) {
+                    $thumbName = pathinfo($thumb->getClientOriginalName(), PATHINFO_FILENAME);
+                    if ($thumbName === $originalNameWithoutExt . '_thumb') {
+                        $thumbnailFile = $thumb;
+                        break;
+                    }
+                }
+
                 $photo = $this->photoService->upload(
                     user: Auth::user(),
                     file: $file,
@@ -54,6 +69,7 @@ class PhotoController extends Controller
                     description: $request->input('description'),
                     tags: $request->input('tags', ''),
                     boardId: $request->input('board_id'),
+                    thumbnailFile: $thumbnailFile,
                 );
 
                 $uploadedPhotos[] = $photo;
@@ -277,5 +293,35 @@ class PhotoController extends Controller
     public function photobooth()
     {
         return view('photos.photobooth');
+    }
+
+    /**
+     * Show 3D Dome Gallery page.
+     */
+    public function domeGallery()
+    {
+        $photos = Photo::with('user')->latest()->get()->map(function ($photo) {
+            $isVid = $photo->isVideo();
+            $thumb = $photo->thumbnail_url;
+
+            if ($isVid) {
+                $ext = strtolower(pathinfo($photo->thumbnail_path, PATHINFO_EXTENSION));
+                $thumbIsVideo = in_array($ext, ['mp4', 'webm', 'ogg', 'mov', 'm4v', 'avi', '3gp']);
+
+                if (empty($photo->thumbnail_path) || $thumbIsVideo) {
+                    // Fallback to a custom SVG thumbnail cover if there is no image thumbnail for this video
+                    $thumb = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='800' height='600' viewBox='0 0 800 600'><rect width='100%' height='100%' fill='%23F5E6CE'/><circle cx='400' cy='300' r='60' fill='%238B5E3C' opacity='0.9'/><polygon points='375,265 375,335 435,300' fill='%23FFF8ED'/><text x='400' y='410' font-family='sans-serif' font-size='24' font-weight='bold' fill='%238B5E3C' text-anchor='middle'>VIDEO</text></svg>";
+                }
+            }
+
+            return [
+                'src' => $thumb ?: $photo->image_url,
+                'videoSrc' => $isVid ? $photo->image_url : null,
+                'is_video' => $isVid,
+                'alt' => $photo->title ?: 'Foto',
+            ];
+        });
+
+        return view('photos.dome', compact('photos'));
     }
 }

@@ -31,6 +31,15 @@
                 </svg>
                 <span>Jelajahi</span>
             </a>
+            <a href="{{ route('photos.dome') }}" 
+               class="px-4 py-2 rounded-full text-sm font-semibold transition-all hover:bg-[#F5E6CE] text-[#8B5E3C] hover:text-[#3B2417] flex items-center gap-1.5"
+               title="3D Gallery">
+                <svg class="w-4 h-4 text-[#8B5E3C]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
+                </svg>
+                <span>3D Galeri</span>
+            </a>
         </div>
     </div>
 
