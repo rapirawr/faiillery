@@ -1,0 +1,36 @@
+{
+  "_rolldown-runtime-QTnfLwEv.js": {
+    "file": "assets/rolldown-runtime-QTnfLwEv.js",
+    "name": "rolldown-runtime"
+  },
+  "resources/css/app.css": {
+    "file": "assets/app-Dx2jI_NH.css",
+    "name": "app",
+    "names": [
+      "app.css"
+    ],
+    "src": "resources/css/app.css",
+    "isEntry": true
+  },
+  "resources/js/app.js": {
+    "file": "assets/app-B_QIoi3k.js",
+    "name": "app",
+    "src": "resources/js/app.js",
+    "isEntry": true,
+    "imports": [
+      "_rolldown-runtime-QTnfLwEv.js"
+    ]
+  },
+  "resources/js/dome-gallery-entry.jsx": {
+    "file": "assets/dome-gallery-entry-BitdxtxC.js",
+    "name": "dome-gallery-entry",
+    "src": "resources/js/dome-gallery-entry.jsx",
+    "isEntry": true,
+    "imports": [
+      "_rolldown-runtime-QTnfLwEv.js"
+    ],
+    "css": [
+      "assets/dome-gallery-entry-C47UEqBm.css"
+    ]
+  }
+}
