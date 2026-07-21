@@ -1,5 +1,7 @@
 deployment:
   tasks:
-    - export DEPLOYPATH=/home/faiiller/public_html
-    - /bin/find public -mindepth 1 ! -name "index.php" -exec /bin/cp -R {} $DEPLOYPATH \;
-    - /bin/cp public/.htaccess $DEPLOYPATH/.htaccess
+    - export APPPATH=/home/faiiller/faiillery
+    - export PUBLICPATH=/home/faiiller/public_html
+
+    - /bin/find $APPPATH/public -mindepth 1 ! -name "index.php" -exec /bin/cp -a {} $PUBLICPATH/ \;
+    - /bin/cp -f $APPPATH/public/.htaccess $PUBLICPATH/.htaccess
