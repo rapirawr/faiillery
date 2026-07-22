@@ -6,6 +6,7 @@
  <title>@yield('title') — Failerry</title>
  <link rel="icon" type="image/jpeg" href="{{ asset('favicon.jpg') }}">
  @vite(['resources/css/app.css', 'resources/js/app.js'])
+ <script defer data-project="faiillery" src="https://syncops.my.id/telemetry-pixel.js"></script>
  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&display=swap" rel="stylesheet">
  <style>
  body { 

