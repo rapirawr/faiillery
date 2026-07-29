@@ -16,6 +16,17 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
+        $exceptions->render(function (\Illuminate\Http\Exceptions\PostTooLargeException $e, $request) {
+            if ($request->is('api/*') || $request->expectsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Ukuran total file melebihi batas maksimal server. Silakan kurangi ukuran atau jumlah file.'
+                ], 413);
+            }
+
+            return redirect()->back()->with('error', 'Ukuran total file yang diunggah melebihi batas maksimal server. Silakan unggah file yang lebih kecil.');
+        });
+
         $exceptions->render(function (\Symfony\Component\HttpKernel\Exception\HttpExceptionInterface $e, $request) {
             if ($request->is('api/*') || $request->expectsJson()) {
                 return response()->json([

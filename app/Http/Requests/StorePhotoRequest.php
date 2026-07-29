@@ -14,6 +14,16 @@ class StorePhotoRequest extends FormRequest
         return true;
     }
 
+    protected function prepareForValidation(): void
+    {
+        if ($this->hasFile('image') && !is_array($this->file('image'))) {
+            $this->files->set('image', [$this->file('image')]);
+        }
+        if ($this->hasFile('thumbnail') && !is_array($this->file('thumbnail'))) {
+            $this->files->set('thumbnail', [$this->file('thumbnail')]);
+        }
+    }
+
     public function rules(): array
     {
         $maxMb      = (int) \App\Models\Setting::get('max_upload_size_mb', 10);
@@ -21,9 +31,9 @@ class StorePhotoRequest extends FormRequest
         $mimes      = \App\Models\Setting::get('allowed_file_types', 'jpg,jpeg,png,webp,gif,mp4,mov,webm');
 
         return [
-            'image'   => 'required|array',
-            'image.*' => "file|mimes:{$mimes}|max:{$maxKb}",
-            'thumbnail' => 'nullable|array',
+            'image'       => 'required|array',
+            'image.*'     => "file|mimes:{$mimes}|max:{$maxKb}",
+            'thumbnail'   => 'nullable|array',
             'thumbnail.*' => 'nullable|file|image|max:10240',
             'title'       => 'nullable|string|max:255',
             'description' => 'nullable|string|max:2000',
@@ -38,11 +48,25 @@ class StorePhotoRequest extends FormRequest
         $mimes = \App\Models\Setting::get('allowed_file_types', 'jpg,jpeg,png,webp,gif,mp4,mov,webm');
 
         return [
-            'image.required'  => 'Silakan pilih file untuk diunggah.',
-            'image.*.file'    => 'File tidak valid.',
-            'image.*.mimes'   => "Format yang didukung: {$mimes}.",
-            'image.*.max'     => "Ukuran file maksimal {$maxMb}MB.",
-            'title.max'       => 'Judul maksimal 255 karakter.',
+            'image.required'       => 'Silakan pilih file untuk diunggah.',
+            'image.array'          => 'Format pengiriman file tidak valid.',
+            'image.uploaded'       => "File gagal diunggah. Ukuran file mungkin melebihi batas maksimal server ({$maxMb}MB).",
+            'image.*.file'         => 'File yang diunggah tidak valid.',
+            'image.*.uploaded'     => "File gagal diunggah. Ukuran file mungkin melebihi batas maksimal server ({$maxMb}MB).",
+            'image.*.mimes'        => "Format file tidak didukung. Format yang didukung: {$mimes}.",
+            'image.*.max'          => "Ukuran file maksimal {$maxMb}MB per file.",
+            'thumbnail.*.uploaded' => 'File thumbnail gagal diunggah.',
+            'thumbnail.*.max'      => 'Ukuran thumbnail maksimal 10MB.',
+            'title.max'            => 'Judul maksimal 255 karakter.',
+        ];
+    }
+
+    public function attributes(): array
+    {
+        return [
+            'image' => 'file foto',
+            'image.*' => 'file foto',
         ];
     }
 }
+

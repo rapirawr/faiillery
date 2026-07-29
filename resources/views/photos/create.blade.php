@@ -213,6 +213,16 @@ function uploadForm() {
  addFiles(files) {
  Array.from(files).forEach(file => {
  if (file && (file.type.startsWith('image/') || file.type.startsWith('video/'))) {
+ if (!this.isAdmin && file.size > this.limit) {
+ const maxMb = {{ \App\Models\Setting::get('max_upload_size_mb', 10) }};
+ const fileSizeMb = (file.size / (1024 * 1024)).toFixed(1);
+ if (window.showToast) {
+ window.showToast(`Ukuran file "${file.name}" (${fileSizeMb}MB) melebihi batas maksimal ${maxMb}MB.`, 'error');
+ } else {
+ alert(`Ukuran file "${file.name}" (${fileSizeMb}MB) melebihi batas maksimal ${maxMb}MB.`);
+ }
+ return;
+ }
  const isVid = file.type.startsWith('video/');
  const reader = new FileReader();
  reader.onload = (e) => {

@@ -28,7 +28,18 @@
         setFile(file) {
             this.isVideo = file.type.startsWith('video/');
             if (!file.type.startsWith('image/') && !this.isVideo) {
-                window.showToast('Silakan pilih file gambar atau video yang valid.', 'error');
+                if (window.showToast) window.showToast('Silakan pilih file gambar atau video yang valid.', 'error');
+                return;
+            }
+            const maxMb = {{ \App\Models\Setting::get('max_upload_size_mb', 10) }};
+            const maxBytes = maxMb * 1024 * 1024;
+            if (file.size > maxBytes) {
+                const fileSizeMb = (file.size / (1024 * 1024)).toFixed(1);
+                if (window.showToast) {
+                    window.showToast(`Ukuran file (${fileSizeMb}MB) melebihi batas maksimal ${maxMb}MB.`, 'error');
+                } else {
+                    alert(`Ukuran file (${fileSizeMb}MB) melebihi batas maksimal ${maxMb}MB.`);
+                }
                 return;
             }
             this.file = file;

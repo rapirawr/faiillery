@@ -111,6 +111,13 @@ class ProfileController extends Controller
             'bio' => 'nullable|string|max:500',
             'avatar' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:30720',
             'cover_photo' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:30720',
+        ], [
+            'avatar.uploaded' => 'Foto profil gagal diunggah. Ukuran file mungkin melebihi batas maksimal server (30MB).',
+            'avatar.max' => 'Ukuran foto profil maksimal 30MB.',
+            'avatar.mimes' => 'Format foto profil harus berupa JPG, JPEG, PNG, atau WEBP.',
+            'cover_photo.uploaded' => 'Foto sampul gagal diunggah. Ukuran file mungkin melebihi batas maksimal server (30MB).',
+            'cover_photo.max' => 'Ukuran foto sampul maksimal 30MB.',
+            'cover_photo.mimes' => 'Format foto sampul harus berupa JPG, JPEG, PNG, atau WEBP.',
         ]);
 
         $user->fill([
