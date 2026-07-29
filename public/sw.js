@@ -1,4 +1,4 @@
-const CACHE_NAME = 'failerry-v1';
+const CACHE_NAME = 'failerry-v2';
 const OFFLINE_URL = '/offline.html';
 const urlsToCache = [
     '/',
@@ -39,23 +39,35 @@ self.addEventListener('fetch', event => {
         return;
     }
 
-    // Only handle navigation requests (HTML pages) for the offline fallback
+    // Skip non-HTTP(S) scheme requests (e.g. chrome-extension://)
+    if (!event.request.url.startsWith('http://') && !event.request.url.startsWith('https://')) {
+        return;
+    }
+
+    // Handle navigation requests (HTML page transitions)
     if (event.request.mode === 'navigate') {
         event.respondWith(
             fetch(event.request).catch(() => {
-                // If network fails, serve the offline page
                 return caches.open(CACHE_NAME).then(cache => {
                     return cache.match(OFFLINE_URL);
                 });
             })
         );
-    } else {
-        // For other assets, try cache first, then network
-        event.respondWith(
-            caches.match(event.request)
-                .then(response => {
-                    return response || fetch(event.request);
-                })
-        );
+        return;
     }
+
+    // For static assets, try cache first, then fetch network safely with catch fallback
+    event.respondWith(
+        caches.match(event.request)
+            .then(response => {
+                if (response) {
+                    return response;
+                }
+                return fetch(event.request).catch(err => {
+                    // Prevent uncaught promise rejections on network errors or cancelled requests
+                    return new Response('', { status: 408, statusText: 'Network Error' });
+                });
+            })
+    );
 });
+
