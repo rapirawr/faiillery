@@ -1,9 +1,9 @@
 ---
 deployment:
   tasks:
-    - export APPPATH=/home/failler/faiillery.my.id/faiillery
-    - export PUBLICPATH=/home/failler/faiillery.my.id/public
+    - export DEPLOYPATH=/home/failler/faillery.my.id/public/
+    - /bin/mkdir -p $DEPLOYPATH
 
-    - /bin/find $APPPATH/public -maxdepth 1 -mindepth 1 ! -name "index.php" -exec /bin/cp -a {} $PUBLICPATH/ \;
-    - /bin/cp -f $APPPATH/public/.htaccess $PUBLICPATH/.htaccess
+    - /bin/find public -maxdepth 1 -mindepth 1 ! -name "index.php" -exec /bin/cp -a {} $DEPLOYPATH \;
+    - /bin/cp -f public/.htaccess $DEPLOYPATH.htaccess
 
