@@ -1,7 +1,7 @@
 deployment:
   tasks:
-    - export APPPATH=/home/faiiller/faiillery
-    - export PUBLICPATH=/home/faiiller/public_html
+    - export APPPATH=/home/faiiller/faiillery.my.id/faiillery-repo
+    - export PUBLICPATH=/home/faiiller/faillery.my.id/pubic
 
     - /bin/find $APPPATH/public -mindepth 1 ! -name "index.php" -exec /bin/cp -a {} $PUBLICPATH/ \;
     - /bin/cp -f $APPPATH/public/.htaccess $PUBLICPATH/.htaccess
