@@ -1,7 +1,7 @@
 ---
 deployment:
   tasks:
-    - export DEPLOYPATH=/home/failler/faillery.my.id/public/
+    - export DEPLOYPATH=/home/faiiller/faillery.my.id/public/
     - /bin/mkdir -p $DEPLOYPATH
 
     - /bin/find public -maxdepth 1 -mindepth 1 ! -name "index.php" -exec /bin/cp -a {} $DEPLOYPATH \;
