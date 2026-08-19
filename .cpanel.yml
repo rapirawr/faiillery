@@ -4,5 +4,6 @@ deployment:
     - export APPPATH=/home/failler/faiillery.my.id/faillery
     - export PUBLICPATH=/home/failler/faiillery.my.id/public
 
-    - /bin/find $APPPATH/public -mindepth 1 ! -name "index.php" -exec /bin/cp -a {} $PUBLICPATH/ \;
-    - /bin/cp -f $APPPATH/public/.htaccess $PUBLICPATH/.htaccess
+    - /bin/find $APPPATH/public -maxdepth 1 -mindepth 1 ! -name "index.php" -exec /bin/cp -a {} $PUBLICPATH/ \;
+    - /bin/cp -f $APPPATH/public/.htaccess $PUBLICPATH/.htaccess
+
